@@ -1,0 +1,660 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ghép Hình Đúng Chỗ</title>
+    <!-- Element SDK scripts (kept for environment compatibility) -->
+    <script src="/_sdk/element_sdk.js"></script>
+    <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+    <script src="https://cdn.tailwindcss.com" type="text/javascript"></script>
+    
+    <style>
+      /* Global Reset and Background */
+      body {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100vh; /* Use vh for better full-screen support */
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        overflow: hidden;
+      }
+
+      html {
+        height: 100%;
+        width: 100%;
+      }
+
+      .game-container {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        padding: 20px;
+        box-sizing: border-box;
+        position: relative;
+        max-width: 1000px; /* Limit container width for desktop readability */
+      }
+
+      /* Header and Score Board */
+      .header {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        margin-bottom: 20px;
+        position: relative;
+      }
+
+      .game-title {
+        font-size: 48px;
+        font-weight: bold;
+        color: white;
+        text-align: center;
+        text-shadow: 3px 3px 6px rgba(0,0,0,0.3);
+      }
+
+      .score-board {
+        background: rgba(255, 255, 255, 0.3);
+        padding: 15px 30px;
+        border-radius: 15px;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        min-width: 120px; /* Ensure space for score */
+        text-align: center;
+      }
+
+      .score-text {
+        font-size: 24px;
+        font-weight: bold;
+        color: white;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        margin: 0;
+      }
+
+      .score-number {
+        font-size: 36px;
+        color: #FFD700;
+      }
+
+      /* Draggable Shapes Container */
+      .shapes-bar {
+        display: flex;
+        gap: 20px;
+        padding: 20px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 20px;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        flex-wrap: wrap;
+        justify-content: center;
+        max-width: 90%;
+        margin-bottom: 30px;
+        position: relative;
+        z-index: 1;
+      }
+
+      /* Individual Shape Styles */
+      .shape {
+        width: 80px;
+        height: 80px;
+        cursor: grab;
+        transition: all 0.2s ease;
+        position: relative;
+        touch-action: none;
+        user-select: none;
+      }
+
+      .shape:active {
+        cursor: grabbing;
+      }
+
+      .shape:hover {
+        transform: scale(1.1);
+      }
+
+      /* Clone for Dragging */
+      .shape-clone {
+        width: 80px;
+        height: 80px;
+        position: fixed;
+        pointer-events: none;
+        z-index: 9999;
+        opacity: 0.9;
+        transition: none;
+        user-select: none;
+      }
+
+      /* Shadow Target Area */
+      .shadow-container {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 40px 0;
+        min-height: 200px;
+      }
+
+      .shadow {
+        width: 150px;
+        height: 150px;
+        opacity: 1;
+        transition: all 0.3s ease;
+        position: relative;
+        filter: brightness(0); /* Makes the emoji black (shadow) */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .shadow.highlight {
+        transform: scale(1.05);
+        filter: brightness(0) drop-shadow(0 0 20px rgba(255,255,255,0.8));
+      }
+
+      .shadow.wrong {
+        animation: shakeAnimation 0.3s ease;
+        filter: brightness(0) drop-shadow(0 0 20px rgba(255,0,0,0.8));
+      }
+
+      /* Animation Keyframes */
+      @keyframes shakeAnimation {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-10px); }
+        75% { transform: translateX(10px); }
+      }
+
+      @keyframes bounceAnimation {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.2); }
+      }
+
+      /* Encouragement Text */
+      .encouragement {
+        font-size: 24px;
+        color: white;
+        text-align: center;
+        margin: 20px 0;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        min-height: 32px;
+      }
+
+      /* Celebration Styles */
+      .confetti-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 10000;
+        overflow: hidden;
+      }
+
+      .confetti {
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        background: #FFD700;
+        animation: confettiFall 3s linear forwards;
+      }
+
+      @keyframes confettiFall {
+        0% {
+          transform: translateY(-100%) rotate(0deg);
+          opacity: 1;
+        }
+        100% {
+          transform: translateY(100%) rotate(720deg);
+          opacity: 0;
+        }
+      }
+
+      .celebration-text {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 72px;
+        font-weight: bold;
+        color: #FFD700;
+        text-shadow: 4px 4px 8px rgba(0,0,0,0.5);
+        z-index: 10001;
+        pointer-events: none;
+        animation: celebrationPop 1s ease-out forwards;
+      }
+
+      @keyframes celebrationPop {
+        0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+        50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+        100% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+      }
+
+      /* EMOJI SHAPE STYLES - Using ::before for content and sizing */
+      .shape, .shadow, .shape-clone {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: transparent;
+      }
+      
+      .shape::before, .shape-clone::before {
+        font-size: 70px;
+      }
+
+      .shadow::before {
+        font-size: 130px;
+      }
+
+      .apple::before { content: '🍎'; }
+      .sheep::before { content: '🐑'; }
+      .firework::before { content: '🎆'; }
+      .flower::before { content: '🌸'; }
+      .cloud::before { content: '☁️'; }
+      .butterfly::before { content: '🦋'; }
+      .fish::before { content: '🐟'; }
+      .tree::before { content: '🌲'; }
+      .sun::before { content: '☀️'; }
+      .house::before { content: '🏠'; }
+
+      /* Responsive Adjustments */
+      @media (max-width: 768px) {
+        .game-title {
+          font-size: 32px;
+        }
+
+        .score-board {
+          padding: 8px 15px;
+          top: 10px;
+          right: 10px;
+        }
+
+        .score-text {
+          font-size: 16px;
+        }
+
+        .score-number {
+          font-size: 24px;
+        }
+
+        .shape, .shape-clone {
+          width: 50px;
+          height: 50px;
+        }
+
+        .shape::before, .shape-clone::before {
+            font-size: 45px;
+        }
+
+        .shadow {
+          width: 100px;
+          height: 100px;
+        }
+
+        .shadow::before {
+            font-size: 90px;
+        }
+
+        .encouragement {
+          font-size: 18px;
+        }
+
+        .celebration-text {
+          font-size: 48px;
+        }
+        
+        .shapes-bar {
+            gap: 10px;
+            padding: 15px;
+        }
+      }
+    </style>
+    <style>@view-transition { navigation: auto; }</style>
+  </head>
+  <body>
+    <main class="game-container">
+      <div class="header">
+        <h1 class="game-title" id="gameTitle">🎯 Ghép Hình Đúng Chỗ!</h1>
+      </div>
+      <div class="score-board">
+        <p class="score-text">Điểm: <span class="score-number" id="scoreDisplay">0</span></p>
+      </div>
+      <div class="shapes-bar" id="shapesBar"></div>
+      <div class="shadow-container">
+        <div class="shadow" id="shadowShape"></div>
+      </div>
+      <p class="encouragement" id="encouragement">Thử xem bạn có chọn đúng không?</p>
+    </main>
+    <div class="confetti-container" id="confettiContainer"></div>
+    
+    <script>
+      const defaultConfig = {
+        game_title: "🎯 Ghép Hình Đúng Chỗ!",
+        encouragement_text: "Thử xem bạn có chọn đúng không?"
+      };
+
+      const shapes = [
+        { name: 'apple', class: 'apple' },
+        { name: 'sheep', class: 'sheep' },
+        { name: 'firework', class: 'firework' },
+        { name: 'flower', class: 'flower' },
+        { name: 'cloud', class: 'cloud' },
+        { name: 'butterfly', class: 'butterfly' },
+        { name: 'fish', class: 'fish' },
+        { name: 'tree', class: 'tree' },
+        { name: 'sun', class: 'sun' },
+        { name: 'house', class: 'house' }
+      ];
+
+      const encouragements = [
+        "Thử xem bạn có chọn đúng không?",
+        "Wow! Bạn giỏi quá đó!",
+        "Cố lên nè ~",
+        "Tuyệt vời lắm! 🌟",
+        "Bạn có thể làm được!"
+      ];
+
+      let currentCorrectShape = null;
+      let draggedElement = null;
+      let cloneElement = null;
+      let score = 0;
+
+      /**
+       * Gets a random color for the draggable shapes.
+       * @returns {string} A hex color string.
+       */
+      function getRandomColor() {
+        const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E2', '#F8B739', '#52B788'];
+        return colors[Math.floor(Math.random() * colors.length)];
+      }
+
+      /**
+       * Updates the score display.
+       */
+      function updateScore() {
+        document.getElementById('scoreDisplay').textContent = score;
+      }
+
+      /**
+       * Creates a brief celebration effect on the screen.
+       */
+      function createCelebration() {
+        // Show celebration text
+        const celebrationText = document.createElement('div');
+        celebrationText.className = 'celebration-text';
+        celebrationText.textContent = '🎉 Tuyệt vời!';
+        document.body.appendChild(celebrationText);
+        
+        setTimeout(() => {
+          celebrationText.remove();
+        }, 1000);
+
+        // Create confetti
+        const confettiContainer = document.getElementById('confettiContainer');
+        const colors = ['#FFD700', '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8', '#F7DC6F', '#BB8FCE'];
+        
+        for (let i = 0; i < 50; i++) {
+          const confetti = document.createElement('div');
+          confetti.className = 'confetti';
+          confetti.style.left = Math.random() * 100 + '%';
+          confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+          confetti.style.animationDelay = Math.random() * 0.5 + 's';
+          confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
+          confettiContainer.appendChild(confetti);
+          
+          setTimeout(() => {
+            confetti.remove();
+          }, 3000);
+        }
+      }
+
+      /**
+       * Initializes a new round of the game.
+       */
+      function initGame() {
+        // 1. Randomly select the correct shape
+        currentCorrectShape = shapes[Math.floor(Math.random() * shapes.length)];
+        
+        // 2. Select 4 unique wrong shapes
+        const wrongShapes = shapes.filter(s => s.name !== currentCorrectShape.name);
+        const selectedWrong = [];
+        while (selectedWrong.length < 4 && selectedWrong.length < wrongShapes.length) {
+          const random = wrongShapes[Math.floor(Math.random() * wrongShapes.length)];
+          if (!selectedWrong.includes(random)) {
+            selectedWrong.push(random);
+          }
+        }
+        
+        // 3. Combine and shuffle all shapes (1 correct + 4 wrong)
+        const allShapes = [currentCorrectShape, ...selectedWrong];
+        allShapes.sort(() => Math.random() - 0.5);
+        
+        // 4. Render shapes bar
+        const shapesBar = document.getElementById('shapesBar');
+        shapesBar.innerHTML = '';
+        allShapes.forEach(shape => {
+          const shapeDiv = document.createElement('div');
+          shapeDiv.className = `shape ${shape.class}`;
+          shapeDiv.dataset.shapeName = shape.name;
+          shapeDiv.style.color = getRandomColor();
+          
+          // Attach event listeners for mouse and touch drag
+          shapeDiv.addEventListener('mousedown', startDrag);
+          shapeDiv.addEventListener('touchstart', startDrag);
+          
+          shapesBar.appendChild(shapeDiv);
+        });
+        
+        // 5. Render shadow
+        const shadowShape = document.getElementById('shadowShape');
+        shadowShape.className = `shadow ${currentCorrectShape.class}`;
+        shadowShape.style.color = '#ffffff'; // The shadow color is always white on the dark background
+        
+        // 6. Update encouragement text
+        const encouragement = document.getElementById('encouragement');
+        encouragement.textContent = encouragements[Math.floor(Math.random() * encouragements.length)];
+      }
+
+      /**
+       * Starts the drag operation by creating a clone element.
+       * @param {Event} e The mouse or touch event.
+       */
+      function startDrag(e) {
+        e.preventDefault();
+        
+        // Find the actual shape element (in case user clicks on pseudo-element content)
+        let target = e.target;
+        while (target && !target.classList.contains('shape')) {
+          target = target.parentElement;
+        }
+        
+        if (!target) return;
+        
+        draggedElement = target;
+        
+        // Create a clone that follows the cursor
+        cloneElement = draggedElement.cloneNode(true);
+        cloneElement.className = draggedElement.className.replace('shape', 'shape-clone');
+        
+        // Ensure the clone inherits the color style
+        cloneElement.style.color = draggedElement.style.color; 
+        
+        document.body.appendChild(cloneElement);
+        
+        // Calculate initial position based on event type
+        const clientX = e.type.startsWith('touch') ? e.touches[0].clientX : e.clientX;
+        const clientY = e.type.startsWith('touch') ? e.touches[0].clientY : e.clientY;
+        
+        // Center the clone on the cursor/touch point (80px wide -> offset by 40px)
+        cloneElement.style.left = (clientX - 40) + 'px';
+        cloneElement.style.top = (clientY - 40) + 'px';
+        
+        // Attach document-level listeners for movement and release
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('mouseup', endDrag);
+        document.addEventListener('touchmove', drag);
+        document.addEventListener('touchend', endDrag);
+      }
+
+      /**
+       * Updates the position of the clone element during dragging.
+       * @param {Event} e The mouse or touch event.
+       */
+      function drag(e) {
+        if (!cloneElement) return;
+        
+        // Prevent default touch scrolling
+        if (e.type === 'touchmove') e.preventDefault(); 
+
+        const clientX = e.type.startsWith('touch') ? e.touches[0].clientX : e.clientX;
+        const clientY = e.type.startsWith('touch') ? e.touches[0].clientY : e.clientY;
+        
+        // Update clone position
+        cloneElement.style.left = (clientX - 40) + 'px';
+        cloneElement.style.top = (clientY - 40) + 'px';
+        
+        // Check for proximity to the shadow target (highlight effect)
+        const shadow = document.getElementById('shadowShape');
+        const shadowRect = shadow.getBoundingClientRect();
+        const cloneRect = cloneElement.getBoundingClientRect();
+        
+        // Calculate center-to-center distance
+        const distance = Math.sqrt(
+          Math.pow(shadowRect.left + shadowRect.width/2 - cloneRect.left - cloneRect.width/2, 2) +
+          Math.pow(shadowRect.top + shadowRect.height/2 - cloneRect.top - cloneRect.height/2, 2)
+        );
+        
+        if (distance < 100) { // Proximity threshold
+          shadow.classList.add('highlight');
+        } else {
+          shadow.classList.remove('highlight');
+        }
+      }
+
+      /**
+       * Ends the drag operation, checks for a correct match, and handles consequences.
+       * @param {Event} e The mouse or touch event.
+       */
+      function endDrag(e) {
+        if (!cloneElement || !draggedElement) return;
+        
+        // Remove listeners
+        document.removeEventListener('mousemove', drag);
+        document.removeEventListener('mouseup', endDrag);
+        document.removeEventListener('touchmove', drag);
+        document.removeEventListener('touchend', endDrag);
+        
+        const shadow = document.getElementById('shadowShape');
+        const shadowRect = shadow.getBoundingClientRect();
+        const cloneRect = cloneElement.getBoundingClientRect();
+        
+        // Calculate center-to-center distance
+        const distance = Math.sqrt(
+          Math.pow(shadowRect.left + shadowRect.width/2 - cloneRect.left - cloneRect.width/2, 2) +
+          Math.pow(shadowRect.top + shadowRect.height/2 - cloneRect.top - cloneRect.height/2, 2)
+        );
+        
+        
+        if (distance < 100) { // Check if dropped near the target
+          if (draggedElement.dataset.shapeName === currentCorrectShape.name) {
+            // --- CORRECT MATCH ---
+            score += 10;
+            updateScore();
+            
+            // Snap the clone to the shadow's center and upscale it
+            const shadowCenterX = shadowRect.left + shadowRect.width / 2;
+            const shadowCenterY = shadowRect.top + shadowRect.height / 2;
+            
+            cloneElement.style.left = (shadowCenterX - 75) + 'px'; // 150/2 = 75px offset
+            cloneElement.style.top = (shadowCenterY - 75) + 'px'; 
+            cloneElement.style.width = '150px';
+            cloneElement.style.height = '150px';
+            cloneElement.style.opacity = '1';
+            
+            // Apply bounce animation and hide the black shadow
+            cloneElement.style.animation = 'bounceAnimation 0.6s ease';
+            shadow.style.opacity = '0';
+            
+            createCelebration();
+            
+            // Start the next round after celebration animation
+            setTimeout(() => {
+              shadow.style.opacity = '1';
+              cloneElement.remove();
+              cloneElement = null;
+              draggedElement = null;
+              initGame();
+            }, 800);
+          } else {
+            // --- WRONG MATCH ---
+            shadow.classList.add('wrong');
+            
+            // Remove the clone after brief animation and reset
+            setTimeout(() => {
+              shadow.classList.remove('wrong');
+              if (cloneElement) cloneElement.remove();
+              cloneElement = null;
+              draggedElement = null;
+            }, 400);
+          }
+        } else {
+          // --- DROPPED OUTSIDE TARGET ---
+          cloneElement.remove();
+          cloneElement = null;
+          draggedElement = null;
+        }
+        
+        shadow.classList.remove('highlight');
+      }
+
+      // --- Element SDK Integration (Used for configuration if available) ---
+      async function onConfigChange(config) {
+        const title = config.game_title || defaultConfig.game_title;
+        const encouragement = config.encouragement_text || defaultConfig.encouragement_text;
+        
+        document.getElementById('gameTitle').textContent = title;
+        
+        // Only update encouragement if the current text is NOT a random one
+        const currentEncouragement = document.getElementById('encouragement').textContent;
+        if (encouragements.indexOf(currentEncouragement) === -1) {
+          document.getElementById('encouragement').textContent = encouragement;
+        }
+      }
+
+      if (window.elementSdk) {
+        window.elementSdk.init({
+          defaultConfig: defaultConfig,
+          onConfigChange: onConfigChange,
+          mapToCapabilities: (config) => ({
+            recolorables: [],
+            borderables: [],
+            fontEditable: undefined,
+            fontSizeable: undefined
+          }),
+          mapToEditPanelValues: (config) => new Map([
+            ["game_title", config.game_title || defaultConfig.game_title],
+            ["encouragement_text", config.encouragement_text || defaultConfig.encouragement_text]
+          ])
+        });
+      }
+
+      // Start game only after DOM is fully loaded
+      document.addEventListener('DOMContentLoaded', () => {
+          initGame();
+          updateScore();
+      });
+
+    </script>
+  </body>
+</html>
