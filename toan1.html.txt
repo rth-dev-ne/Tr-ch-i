@@ -61,7 +61,8 @@
         text-align: center;
         text-shadow: 3px 3px 6px rgba(0,0,0,0.3);
       }
-
+      
+      /* Cập nhật: Đặt Score Board ở góc trên bên TRÁI */
       .score-board {
         background: rgba(255, 255, 255, 0.3);
         padding: 15px 30px;
@@ -70,8 +71,8 @@
         box-shadow: 0 4px 16px rgba(0,0,0,0.2);
         position: absolute;
         top: 20px;
-        right: 20px;
-        min-width: 120px; /* Ensure space for score */
+        left: 20px; /* Thay đổi từ right sang left */
+        min-width: 120px;
         text-align: center;
       }
 
@@ -146,9 +147,10 @@
         min-height: 200px;
       }
 
+      /* Cập nhật: Tăng kích thước Shadow */
       .shadow {
-        width: 150px;
-        height: 150px;
+        width: 200px; /* Tăng từ 150px lên 200px */
+        height: 200px; /* Tăng từ 150px lên 200px */
         opacity: 1;
         transition: all 0.3s ease;
         position: relative;
@@ -253,8 +255,9 @@
         font-size: 70px;
       }
 
+      /* Cập nhật: Kích thước emoji trong Shadow lớn hơn để phù hợp với 200px */
       .shadow::before {
-        font-size: 130px;
+        font-size: 180px; /* Tăng từ 130px lên 180px */
       }
 
       .apple::before { content: '🍎'; }
@@ -277,7 +280,7 @@
         .score-board {
           padding: 8px 15px;
           top: 10px;
-          right: 10px;
+          left: 10px; /* Đảm bảo vẫn là left trên mobile */
         }
 
         .score-text {
@@ -297,13 +300,14 @@
             font-size: 45px;
         }
 
+        /* Cập nhật: Kích thước Shadow trên mobile */
         .shadow {
-          width: 100px;
-          height: 100px;
+          width: 150px;
+          height: 150px;
         }
 
         .shadow::before {
-            font-size: 90px;
+            font-size: 130px;
         }
 
         .encouragement {
@@ -327,6 +331,7 @@
       <div class="header">
         <h1 class="game-title" id="gameTitle">🎯 Ghép Hình Đúng Chỗ!</h1>
       </div>
+      <!-- Score Board đã được di chuyển sang góc trên bên trái trong CSS -->
       <div class="score-board">
         <p class="score-text">Điểm: <span class="score-number" id="scoreDisplay">0</span></p>
       </div>
@@ -369,6 +374,8 @@
       let draggedElement = null;
       let cloneElement = null;
       let score = 0;
+      const SHAPE_SIZE = 80; // Kích thước hình kéo (shape)
+      const SHADOW_SIZE = 200; // Kích thước bóng (shadow)
 
       /**
        * Gets a random color for the draggable shapes.
@@ -496,9 +503,9 @@
         const clientX = e.type.startsWith('touch') ? e.touches[0].clientX : e.clientX;
         const clientY = e.type.startsWith('touch') ? e.touches[0].clientY : e.clientY;
         
-        // Center the clone on the cursor/touch point (80px wide -> offset by 40px)
-        cloneElement.style.left = (clientX - 40) + 'px';
-        cloneElement.style.top = (clientY - 40) + 'px';
+        // Center the clone on the cursor/touch point (SHAPE_SIZE / 2 offset)
+        cloneElement.style.left = (clientX - SHAPE_SIZE / 2) + 'px';
+        cloneElement.style.top = (clientY - SHAPE_SIZE / 2) + 'px';
         
         // Attach document-level listeners for movement and release
         document.addEventListener('mousemove', drag);
@@ -521,8 +528,8 @@
         const clientY = e.type.startsWith('touch') ? e.touches[0].clientY : e.clientY;
         
         // Update clone position
-        cloneElement.style.left = (clientX - 40) + 'px';
-        cloneElement.style.top = (clientY - 40) + 'px';
+        cloneElement.style.left = (clientX - SHAPE_SIZE / 2) + 'px';
+        cloneElement.style.top = (clientY - SHAPE_SIZE / 2) + 'px';
         
         // Check for proximity to the shadow target (highlight effect)
         const shadow = document.getElementById('shadowShape');
@@ -535,7 +542,7 @@
           Math.pow(shadowRect.top + shadowRect.height/2 - cloneRect.top - cloneRect.height/2, 2)
         );
         
-        if (distance < 100) { // Proximity threshold
+        if (distance < SHADOW_SIZE / 2) { // Proximity threshold based on half shadow size
           shadow.classList.add('highlight');
         } else {
           shadow.classList.remove('highlight');
@@ -566,7 +573,7 @@
         );
         
         
-        if (distance < 100) { // Check if dropped near the target
+        if (distance < SHADOW_SIZE / 2) { // Check if dropped near the target
           if (draggedElement.dataset.shapeName === currentCorrectShape.name) {
             // --- CORRECT MATCH ---
             score += 10;
@@ -576,11 +583,15 @@
             const shadowCenterX = shadowRect.left + shadowRect.width / 2;
             const shadowCenterY = shadowRect.top + shadowRect.height / 2;
             
-            cloneElement.style.left = (shadowCenterX - 75) + 'px'; // 150/2 = 75px offset
-            cloneElement.style.top = (shadowCenterY - 75) + 'px'; 
-            cloneElement.style.width = '150px';
-            cloneElement.style.height = '150px';
+            // Căn giữa clone vào vị trí của shadow (sử dụng SHADOW_SIZE)
+            cloneElement.style.left = (shadowCenterX - SHADOW_SIZE / 2) + 'px'; 
+            cloneElement.style.top = (shadowCenterY - SHADOW_SIZE / 2) + 'px'; 
+            cloneElement.style.width = SHADOW_SIZE + 'px';
+            cloneElement.style.height = SHADOW_SIZE + 'px';
             cloneElement.style.opacity = '1';
+            
+            // Tăng kích thước emoji của clone lên để phù hợp với shadow
+            cloneElement.style.setProperty('--emoji-size', '180px');
             
             // Apply bounce animation and hide the black shadow
             cloneElement.style.animation = 'bounceAnimation 0.6s ease';
