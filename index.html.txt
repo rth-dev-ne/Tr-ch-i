@@ -1,0 +1,569 @@
+<!doctype html>
+    <html lang="vi">
+     <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Cân Khoa Học Vui Nhộn</title>
+      <style>
+        /* 1. STYLES CHUNG & FONT */
+        body {
+          box-sizing: border-box;
+          margin: 0;
+          padding: 0;
+          font-family: 'Inter', sans-serif;
+          background: linear-gradient(135deg, #3F51B5 0%, #2196F3 100%);
+          min-height: 100vh;
+          overflow-x: hidden;
+        }
+
+        * {
+          box-sizing: border-box;
+        }
+
+        .container {
+          width: 100%;
+          min-height: 100vh;
+          padding: 20px 15px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 15px;
+        }
+
+        .header {
+          text-align: center;
+          max-width: 100%;
+        }
+
+        .title {
+          font-size: 38px;
+          font-weight: 800;
+          color: #FFC107;
+          margin: 0 0 8px 0;
+          text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .instruction {
+          font-size: 16px;
+          color: #E3F2FD;
+          margin: 0;
+          background: rgba(255,255,255,0.2);
+          padding: 8px 15px;
+          border-radius: 12px;
+          display: inline-block;
+        }
+
+        /* 2. KHU VỰC CHỌN VẬT THỂ (TOP) */
+        .items-panel {
+          background: rgba(255, 255, 255, 0.95);
+          border-radius: 20px;
+          padding: 15px;
+          box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+          width: 98%;
+          max-width: 1400px;
+          display: flex;
+          flex-direction: column;
+        }
+
+        .selector-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .panel-title {
+          font-size: 22px;
+          font-weight: bold;
+          color: #3F51B5;
+          margin: 0;
+        }
+        
+        .side-selector {
+          display: flex;
+          gap: 5px;
+          background: #E0E7FF;
+          padding: 3px;
+          border-radius: 10px;
+        }
+
+        .side-btn {
+          padding: 8px 12px;
+          border: none;
+          border-radius: 8px;
+          font-size: 14px;
+          font-weight: bold;
+          cursor: pointer;
+          transition: all 0.2s;
+          background: transparent;
+          color: #3F51B5;
+        }
+
+        .side-btn.active {
+          background: #3F51B5;
+          color: white;
+          box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        /* Grid/Scroll cho items */
+        .items-grid {
+          display: flex;
+          overflow-x: auto;
+          gap: 10px;
+          padding: 5px 0;
+          scrollbar-width: thin;
+          scrollbar-color: #3F51B5 #E0E7FF;
+        }
+
+        .item {
+          flex-shrink: 0;
+          background: #F8F8FF;
+          border-radius: 12px;
+          padding: 10px;
+          cursor: pointer;
+          box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+          transition: all 0.2s;
+          text-align: center;
+          user-select: none;
+          border: 3px solid transparent;
+          min-width: 100px;
+        }
+
+        .item:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+          border-color: #FF9800;
+        }
+
+        .item-icon {
+          font-size: 36px;
+          display: block;
+        }
+
+        .item-weight {
+          font-size: 12px;
+          color: #555;
+          background: #E0E7FF;
+          padding: 3px 6px;
+          border-radius: 6px;
+          margin-top: 4px;
+          font-weight: 500;
+        }
+
+        /* 3. KHU VỰC CÂN ĐĨA (MIDDLE - HORIZONTAL) */
+        .scale-area {
+          width: 98%;
+          max-width: 1400px;
+          padding: 20px 0;
+        }
+
+        .scale-wrapper {
+          position: relative;
+          width: 100%;
+          max-width: 1000px;
+          height: 320px;
+          margin: 0 auto;
+        }
+
+        /* Khối lượng hiển thị */
+        .weight-displays-top {
+            position: absolute;
+            top: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            z-index: 5;
+        }
+        
+        .weight-display {
+          background: #FF9800;
+          color: white;
+          padding: 8px 16px;
+          border-radius: 12px;
+          font-size: 16px;
+          font-weight: bold;
+          box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+          min-width: 100px;
+          text-align: center;
+          transition: all 0.3s;
+        }
+        /* ĐIỀU CHỈNH VỊ TRÍ CHO TỶ LỆ NGANG RỘNG */
+        .weight-display:first-child { margin-left: 15%; } 
+        .weight-display:last-child { margin-right: 15%; }
+
+        /* CÂN ĐĨA - PHONG CÁCH KHOA HỌC */
+        .scale-base {
+          position: absolute;
+          top: 70%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          width: 60px;
+          height: 100px;
+          background: #3F51B5;
+          border-radius: 15px 15px 5px 5px;
+          box-shadow: 0 6px 15px rgba(0,0,0,0.4);
+          z-index: 1;
+        }
+
+        .scale-beam {
+          position: absolute;
+          top: 70%;
+          left: 50%;
+          transform-origin: center center;
+          width: 80%;
+          height: 18px;
+          background: #00BCD4;
+          border-radius: 9px;
+          margin-left: -40%;
+          margin-top: -9px;
+          transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+          z-index: 2;
+          box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        .scale-fulcrum {
+          position: absolute;
+          top: 70%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          width: 0;
+          height: 0;
+          border-left: 15px solid transparent;
+          border-right: 15px solid transparent;
+          border-bottom: 25px solid #FF9800;
+          z-index: 3;
+        }
+
+        .scale-pan {
+          position: absolute;
+          top: 70%;
+          width: 12%;
+          min-width: 90px;
+          height: 80px;
+          background: #FFEB3B;
+          border: 4px solid #FFC107;
+          border-radius: 50%;
+          box-shadow: 0 6px 18px rgba(0,0,0,0.15), inset 0 3px 10px rgba(255,255,255,0.5);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 10px;
+          transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+          overflow: hidden;
+        }
+
+        /* ĐIỀU CHỈNH VỊ TRÍ CHO TỶ LỆ NGANG RỘNG */
+        .scale-pan-left {
+          left: 10%;
+          transform: translateY(-80%);
+        }
+
+        .scale-pan-right {
+          right: 10%;
+          transform: translateY(-80%);
+        }
+
+        .scale-pan-content {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 5px;
+          justify-content: center;
+          align-items: center;
+          width: 100%;
+          overflow: hidden;
+        }
+
+        .pan-item {
+          font-size: 28px;
+          animation: drop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+          filter: drop-shadow(1px 1px 3px rgba(0,0,0,0.15));
+        }
+
+        .balance-indicator {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          background: #ffffff;
+          padding: 12px 25px;
+          border-radius: 20px;
+          font-size: 20px;
+          font-weight: bold;
+          box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+          z-index: 10;
+          opacity: 0;
+          transition: opacity 0.3s, transform 0.3s;
+          white-space: nowrap;
+        }
+
+        .balance-indicator.show { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
+        .balance-indicator.balanced { color: #4CAF50; border: 3px solid #4CAF50; }
+        .balance-indicator.left-heavy { color: #3F51B5; border: 3px solid #3F51B5; }
+        .balance-indicator.right-heavy { color: #FF9800; border: 3px solid #FF9800; }
+        
+        /* 4. KHU VỰC GIẢI THÍCH & CONTROL (BOTTOM) */
+        .footer-panel {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            width: 98%;
+            max-width: 1400px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .reset-button {
+          background: #4CAF50;
+          color: white;
+          border: none;
+          border-radius: 12px;
+          padding: 12px 24px;
+          font-size: 16px;
+          font-weight: bold;
+          cursor: pointer;
+          box-shadow: 0 4px 10px rgba(76,175,80,0.5);
+          transition: all 0.2s;
+          margin: 0 auto;
+        }
+
+        .reset-button:hover {
+          background: #66BB6A;
+          transform: translateY(-2px);
+          box-shadow: 0 6px 12px rgba(76,175,80,0.7);
+        }
+
+        .explanation-title {
+          font-size: 20px;
+          font-weight: bold;
+          color: #3F51B5;
+          margin: 0 0 10px 0;
+          text-align: center;
+        }
+
+        .explanation-text {
+          font-size: 15px;
+          color: #333;
+          line-height: 1.5;
+          text-align: center;
+        }
+
+        /* Responsive cho màn hình hẹp */
+        @media (max-width: 768px) {
+          .title {
+              font-size: 30px;
+          }
+          .scale-wrapper {
+              height: 250px;
+              max-width: 600px;
+          }
+          .scale-beam {
+              width: 90%;
+              margin-left: -45%;
+          }
+          .weight-display {
+            font-size: 14px;
+            padding: 6px 10px;
+          }
+          /* ĐIỀU CHỈNH LẠI VỊ TRÍ TRÊN MÀN HÌNH NHỎ */
+          .scale-pan-left { left: 5%; }
+          .scale-pan-right { right: 5%; }
+          .weight-display:first-child { margin-left: 5%; } 
+          .weight-display:last-child { margin-right: 5%; }
+        }
+      </style>
+      <script src="https://cdn.tailwindcss.com" type="text/javascript"></script>
+     </head>
+     <body>
+      <div class="container">
+       <div class="header">
+        <h1 class="title" id="mainTitle">KHÁM PHÁ CÂN KHOA HỌC</h1>
+        <p class="instruction" id="instructionText">🧪 Chọn bên cân → Thêm vật → Quan sát hiện tượng!</p>
+       </div>
+       
+       <!-- 1. KHU VỰC CHỌN VẬT THỂ (TOP) -->
+        <div class="items-panel">
+         <div class="selector-header">
+            <h2 class="panel-title">Chọn Vật 💡</h2>
+            <div class="side-selector"><button class="side-btn active" id="leftBtn" onclick="selectSide('left')"> ⬅️ Đĩa Trái </button> <button class="side-btn" id="rightBtn" onclick="selectSide('right')"> Đĩa Phải ➡️ </button>
+            </div>
+         </div>
+         <div class="items-grid" id="itemsGrid"></div>
+        </div>
+        
+        <!-- 2. KHU VỰC CÂN ĐĨA (MIDDLE - HORIZONTAL) -->
+        <div class="scale-area">
+            <div class="scale-container">
+             <div class="scale-wrapper">
+                <!-- HIỂN THỊ KHỐI LƯỢNG (PHÍA TRÊN CÂN) -->
+                <div class="weight-displays-top">
+                     <div class="weight-display">
+                        Trái: <span id="leftWeight">0</span>g
+                     </div>
+                     <div class="weight-display">
+                        Phải: <span id="rightWeight">0</span>g
+                     </div>
+                </div>
+                
+                <div class="balance-indicator" id="balanceIndicator">
+                 ⚖️ Cân bằng!
+                </div>
+                <div class="scale-base"></div>
+                <div class="scale-fulcrum"></div>
+                <div class="scale-beam" id="scaleBeam"></div>
+                
+                <div class="scale-pan scale-pan-left" id="panLeft">
+                 <div class="scale-pan-content" id="panLeftContent"></div>
+                </div>
+                <div class="scale-pan scale-pan-right" id="panRight">
+                 <div class="scale-pan-content" id="panRightContent"></div>
+                </div>
+             </div>
+            </div>
+        </div>
+        
+        <!-- 3. KHU VỰC GIẢI THÍCH & CONTROL (BOTTOM) -->
+        <div class="footer-panel">
+            <button class="reset-button" onclick="resetAll()">✅ Bắt đầu lại (Quay về Mặc định)</button>
+            <div class="explanation-box">
+                <h2 class="explanation-title" id="explanationTitle">💡 Nguyên lý Khối lượng và Trọng lực</h2>
+                <p class="explanation-text" id="explanationText">Chiếc cân đĩa hoạt động dựa trên nguyên tắc đòn bẩy. Vật nào có tổng khối lượng lớn hơn, trọng lực tác dụng lên nó sẽ lớn hơn, kéo đĩa cân bên đó xuống thấp. Khi hai bên cân bằng, tổng khối lượng bằng nhau, và đòn bẩy sẽ nằm ngang. Thử tìm cách cân bằng một quả dưa hấu 🍉 bằng nhiều quả táo 🍎 nhé!</p>
+            </div>
+        </div>
+      </div>
+      <script>
+        // Danh sách vật thể và khối lượng
+        const items = [
+          { id: 'strawberry', name: 'Dâu', icon: '🍓', weight: 50 },
+          { id: 'grapes', name: 'Nho', icon: '🍇', weight: 80 },
+          { id: 'apple', name: 'Táo', icon: '🍎', weight: 100 },
+          { id: 'banana', name: 'Chuối', icon: '🍌', weight: 120 },
+          { id: 'orange', name: 'Cam', icon: '🍊', weight: 150 },
+          { id: 'mango', name: 'Xoài', icon: '🥭', weight: 200 },
+          { id: 'pineapple', name: 'Dứa', icon: '🍍', weight: 400 },
+          { id: 'watermelon', name: 'Dưa hấu', icon: '🍉', weight: 500 },
+          { id: 'pumpkin', name: 'Bí ngô', icon: '🎃', weight: 600 },
+          { id: 'rock', name: 'Đá', icon: '🪨', weight: 800 }
+        ];
+
+        let leftWeight = 0;
+        let rightWeight = 0;
+        let selectedSide = 'left';
+
+        // Khởi tạo lưới vật thể
+        function initItems() {
+          const grid = document.getElementById('itemsGrid');
+          grid.innerHTML = '';
+          
+          items.forEach(item => {
+            const itemEl = document.createElement('div');
+            itemEl.className = 'item';
+            itemEl.innerHTML = `
+              <span class="item-icon">${item.icon}</span>
+              <div class="item-weight">${item.weight}g</div>
+            `;
+            
+            itemEl.onclick = () => addItemToPan(selectedSide, item);
+            
+            grid.appendChild(itemEl);
+          });
+        }
+
+        // Chọn bên cân
+        function selectSide(side) {
+          selectedSide = side;
+          document.getElementById('leftBtn').classList.toggle('active', side === 'left');
+          document.getElementById('rightBtn').classList.toggle('active', side === 'right');
+        }
+
+        // Thêm vật thể vào đĩa cân và cập nhật khối lượng
+        function addItemToPan(side, item) {
+          const content = document.getElementById(side === 'left' ? 'panLeftContent' : 'panRightContent');
+          const itemEl = document.createElement('div');
+          itemEl.className = 'pan-item';
+          itemEl.textContent = item.icon;
+          itemEl.dataset.weight = item.weight;
+          content.appendChild(itemEl);
+          
+          if (side === 'left') {
+            leftWeight += item.weight;
+            document.getElementById('leftWeight').textContent = leftWeight;
+          } else {
+            rightWeight += item.weight;
+            document.getElementById('rightWeight').textContent = rightWeight;
+          }
+          
+          updateScale();
+        }
+
+        // Cập nhật trạng thái cân (góc nghiêng và vị trí đĩa cân)
+        function updateScale() {
+          const beam = document.getElementById('scaleBeam');
+          const panLeft = document.getElementById('panLeft');
+          const panRight = document.getElementById('panRight');
+          const indicator = document.getElementById('balanceIndicator');
+          
+          const diff = rightWeight - leftWeight;
+          const maxAngle = 18;
+          // Tính toán góc nghiêng: chia cho một hằng số (ví dụ 30) để kiểm soát độ nhạy
+          const angle = Math.max(-maxAngle, Math.min(maxAngle, diff / 30));
+          
+          beam.style.transform = `rotate(${angle}deg)`;
+          
+          // Tính toán sự di chuyển dọc của đĩa cân (ngược với góc)
+          const leftMove = -angle * 4;
+          const rightMove = angle * 4;
+          
+          // Cập nhật vị trí đĩa cân (đã giảm -80% trong CSS)
+          panLeft.style.transform = `translateY(calc(-80% + ${leftMove}px))`;
+          panRight.style.transform = `translateY(calc(-80% + ${rightMove}px))`;
+          
+          // Cập nhật chỉ báo cân bằng
+          indicator.classList.remove('balanced', 'left-heavy', 'right-heavy', 'show');
+          
+          if (leftWeight === 0 && rightWeight === 0) {
+            return;
+          }
+          
+          setTimeout(() => {
+            indicator.classList.add('show');
+            
+            // Ngưỡng cân bằng (tolerance) là 30g
+            if (Math.abs(diff) < 30) {
+              indicator.textContent = '⚖️ Cân bằng!';
+              indicator.classList.add('balanced');
+            } else if (leftWeight > rightWeight) {
+              indicator.textContent = '⬅️ Bên Trái Nặng Hơn!';
+              indicator.classList.add('left-heavy');
+            } else {
+              indicator.textContent = '➡️ Bên Phải Nặng Hơn!';
+              indicator.classList.add('right-heavy');
+            }
+          }, 100);
+        }
+
+        // Chức năng: Quay về Mặc định (Xóa hết)
+        function resetAll() {
+            document.getElementById('panLeftContent').innerHTML = '';
+            leftWeight = 0;
+            document.getElementById('leftWeight').textContent = 0;
+
+            document.getElementById('panRightContent').innerHTML = '';
+            rightWeight = 0;
+            document.getElementById('rightWeight').textContent = 0;
+            
+            updateScale();
+            document.getElementById('balanceIndicator').classList.remove('show');
+            selectSide('left');
+        }
+
+        // Khởi tạo ứng dụng
+        document.addEventListener('DOMContentLoaded', () => {
+            initItems();
+            resetAll(); 
+        });
+      </script>
+     </body>
+    </html>
